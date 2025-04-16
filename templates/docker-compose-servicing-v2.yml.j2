@@ -19,9 +19,10 @@ services:
     command: >
       bash -c 'echo Waiting for Kafka to be ready... &&
       cub kafka-ready -b {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 1 30 &&
-      kafka-topics --create --topic testusers --partitions 3 --replication-factor 3 --if-not-exists --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 &&
-      kafka-topics --create --topic testmsgs --partitions 2 --replication-factor 3 --if-not-exists --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 &&
-      kafka-console-producer --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 --topic testusers < /data/message.json &&
+{% for topic in kafka_topics %}
+      kafka-topics --create --topic {{ topic.name }} --partitions {{ topic.partitions }} --replication-factor {{ topic.replication_factor }} --if-not-exists --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 &&
+{% endfor %}
+      kafka-console-producer --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 --topic {{ kafka_topics[0].name }} < /data/message.json &&
       kafka-topics --list --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092'
 
   kafka-ui:

@@ -1,26 +1,33 @@
 ---
 all:
   vars:
-    kafka_cluster_id: "ZjYwZDM4OTYxOTRmMTFmMG"  # cat /proc/sys/kernel/random/uuid | tr -d '-' | base64 | cut -b 1-22
+    kafka_cluster_id: "ZGVmN2YwZWI5MGU5NDk5YW"  # cat /proc/sys/kernel/random/uuid | tr -d '-' | base64 | cut -b 1-22
+    kafka_topics:
+      - name: testusers
+        partitions: 3
+        replication_factor: 3
+      - name: testmsgs
+        partitions: 2
+        replication_factor: 3
   children:
     kafka:
       hosts:
-        kafka-n1.zvonok.in:
-          ansible_host: kafka-n1.zvonok.in
+        kafka-n1.test.com:
+          ansible_host: kafka-n1.test.com
           node_id: 1
-        kafka-n2.zvonok.in:
-          ansible_host: kafka-n2.zvonok.in
+        kafka-n2.test.com:
+          ansible_host: kafka-n2.test.com
           node_id: 2
-        kafka-n3.zvonok.in:
-          ansible_host: kafka-n3.zvonok.in
+        kafka-n3.test.com:
+          ansible_host: kafka-n3.test.com
           node_id: 3
-        kafka-n4.zvonok.in:
-          ansible_host: kafka-n4.zvonok.in
+        kafka-n4.test.com:
+          ansible_host: kafka-n4.test.com
           node_id: 4
-        kafka-n5.zvonok.in:
-          ansible_host: kafka-n5.zvonok.in
+        kafka-n5.test.com:
+          ansible_host: kafka-n5.test.com
           node_id: 5
     haproxy:
       hosts:
-        kafka.zvonok.in:
-          ansible_host: kafka.zvonok.in
+        kafka.test.com:
+          ansible_host: kafka.test.com
