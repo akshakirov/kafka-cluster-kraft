@@ -1,0 +1,44 @@
+---
+- name: Destroy all
+  hosts: all
+  become: true
+  vars:
+    kafka_dir: "/opt/kafka/"
+    haproxy_dir: "/opt/haproxy/"
+  tasks:
+    - name: Check if Kafka directory exists
+      ansible.builtin.stat:
+        path: "{{ kafka_dir }}"
+      register: kafka_dir_check
+
+    - name: Check if HAProxy directory exists
+      ansible.builtin.stat:
+        path: "{{ haproxy_dir }}"
+      register: haproxy_dir_check
+
+    - name: Destroy Kafka container
+      community.docker.docker_compose_v2:
+        project_src: /opt/kafka
+        state: absent
+        remove_orphans: true
+        remove_volumes: true
+      when: kafka_dir_check.stat.exists
+
+    - name: Destroy Haproxy container
+      community.docker.docker_compose_v2:
+        project_src: /opt/haproxy
+        state: absent
+        remove_orphans: true
+        remove_volumes: true
+      when: haproxy_dir_check.stat.exists
+
+    - name: Delete Kafka data directory
+      ansible.builtin.file:
+        path: "{{ kafka_dir }}"
+        state: absent
+
+    - name: Delete Haproxy data directory
+      ansible.builtin.file:
+        path: "{{ haproxy_dir }}"
+        state: absent
+

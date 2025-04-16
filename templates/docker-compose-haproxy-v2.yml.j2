@@ -1,0 +1,11 @@
+---
+services:
+  haproxy:
+    image: haproxy:3.0.9
+    container_name: haproxy_kafka
+    restart: unless-stopped
+    volumes:
+      - /opt/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "9094:9092"
+      - "80:80"

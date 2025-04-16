@@ -1,0 +1,100 @@
+---
+- name: Deploy Kafka KRaft Cluster and HAProxy
+  hosts: all
+  become: true
+  vars:
+    kafka_image: "bitnami/kafka:latest"
+    kafka_dir: "/opt/kafka"
+  tasks:
+    - name: Create Kafka data directory
+      ansible.builtin.file:
+        path: "{{ kafka_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download JMX Exporter JAR
+      ansible.builtin.get_url:
+        url: https://github.com/prometheus/jmx_exporter/releases/download/1.2.0/jmx_prometheus_javaagent-1.2.0.jar
+        dest: /opt/kafka/jmx_prometheus_javaagent.jar
+        mode: '0644'
+      when: inventory_hostname in groups['kafka']
+
+    - name: Upload kafka.yml JMX config
+      ansible.builtin.template:
+        src: ./templates/jmx-kafka.yml
+        dest: /opt/kafka/kafka.yml
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['kafka']
+
+    - name: Copy Kafka docker-compose template
+      ansible.builtin.template:
+        src: ./templates/docker-compose-kafka-v2.yml.j2
+        dest: /opt/kafka/docker-compose.yml
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['kafka']
+
+    - name: Start Kafka container
+      community.docker.docker_compose_v2:
+        project_src: /opt/kafka
+      when: inventory_hostname in groups['kafka']
+
+    - name: Create HAProxy config directory
+      ansible.builtin.file:
+        path: /opt/haproxy
+        state: directory
+        mode: '0755'
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Copy HAProxy config
+      ansible.builtin.template:
+        src: ./templates/haproxy.cfg
+        dest: /opt/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Copy HAProxy docker-compose template
+      ansible.builtin.template:
+        src: ./templates/docker-compose-haproxy-v2.yml.j2
+        dest: /opt/haproxy/docker-compose.yml
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Start HAProxy container
+      community.docker.docker_compose_v2:
+        project_src: /opt/haproxy
+        state: absent
+        remove_orphans: true
+        remove_volumes: true
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Copy message.json
+      ansible.builtin.template:
+        src: ./templates/message.json
+        dest: /opt/kafka/message.json
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Copy servicing docker-compose template
+      ansible.builtin.template:
+        src: ./templates/docker-compose-servicing-v2.yml.j2
+        dest: /opt/kafka/docker-compose.yml
+        owner: root
+        group: root
+        mode: "0644"
+      when: inventory_hostname in groups['haproxy']
+
+    - name: Start servicing containers
+      community.docker.docker_compose_v2:
+        project_src: /opt/kafka
+      when: inventory_hostname in groups['haproxy']
+

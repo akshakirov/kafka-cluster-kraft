@@ -1,0 +1,26 @@
+---
+all:
+  vars:
+    kafka_cluster_id: "ZjYwZDM4OTYxOTRmMTFmMG"  # cat /proc/sys/kernel/random/uuid | tr -d '-' | base64 | cut -b 1-22
+  children:
+    kafka:
+      hosts:
+        kafka-n1.zvonok.in:
+          ansible_host: kafka-n1.zvonok.in
+          node_id: 1
+        kafka-n2.zvonok.in:
+          ansible_host: kafka-n2.zvonok.in
+          node_id: 2
+        kafka-n3.zvonok.in:
+          ansible_host: kafka-n3.zvonok.in
+          node_id: 3
+        kafka-n4.zvonok.in:
+          ansible_host: kafka-n4.zvonok.in
+          node_id: 4
+        kafka-n5.zvonok.in:
+          ansible_host: kafka-n5.zvonok.in
+          node_id: 5
+    haproxy:
+      hosts:
+        kafka.zvonok.in:
+          ansible_host: kafka.zvonok.in

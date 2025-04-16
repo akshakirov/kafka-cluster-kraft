@@ -1,0 +1,41 @@
+---
+services:
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka_exporter
+    restart: unless-stopped
+    ports:
+      - "9308:9308"
+    command:
+      {% for host in groups['kafka'] %}
+      - "--kafka.server={{ hostvars[host]['ansible_host'] }}:9092"
+      {% endfor %}
+
+  kafka-init-topics:
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka_init_topics
+    volumes:
+      - ./message.json:/data/message.json
+    command: >
+      bash -c 'echo Waiting for Kafka to be ready... &&
+      cub kafka-ready -b {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 1 30 &&
+      kafka-topics --create --topic testusers --partitions 3 --replication-factor 3 --if-not-exists --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 &&
+      kafka-topics --create --topic testmsgs --partitions 2 --replication-factor 3 --if-not-exists --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 &&
+      kafka-console-producer --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092 --topic testusers < /data/message.json &&
+      kafka-topics --list --bootstrap-server {{ hostvars[groups["kafka"][0]]["ansible_host"] }}:9092'
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka_ui
+    ports:
+      - "80:8080"
+    restart: always
+    environment:
+{% set kafka_hosts = groups['kafka'] %}
+{% for i in range(kafka_hosts | length) %}
+      KAFKA_CLUSTERS_{{ i }}_NAME: {{ kafka_hosts[i] }}
+      KAFKA_CLUSTERS_{{ i }}_BOOTSTRAPSERVERS: {{ hostvars[kafka_hosts[i]]['ansible_host'] }}:9092
+      KAFKA_CLUSTERS_{{ i }}_METRICS_PORT: 9404
+{% endfor %}
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
